@@ -3,7 +3,7 @@ const app = express()
 const port = 3000
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost:27017/RSO_EVENTS', {useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true, useUnifiedTopology: true})
 const db = mongoose.connection
 
 db.on('error', (error) => console.error(error))
