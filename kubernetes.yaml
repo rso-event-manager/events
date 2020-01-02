@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: events-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: events
+  template:
+    metadata:
+      labels:
+        app: events
+    spec:
+      containers:
+      - image: ribvid/rso-events:latest
+        name: events
+        env:
+        - name: DATABASE_URL
+          value: mongodb://rso-events:kSziQAbCu8EF8X6WZmqlCU2mrhswWJfm5XtCEdk8PBifqEDm1TYmJ2lp44gxvDTjIB1pPaFCDQ6ZRCEFiueivg==@rso-events.documents.azure.com:10255/?ssl=true&replicaSet=globaldb
+        ports:
+        - containerPort: 3000
+          name: server
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: events
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: server
+  selector:
+    app: events
