@@ -35,6 +35,7 @@ router.get('/', async (req, res) => {
 						if (res && res.data && res.data.venue) {
 							event = {...event._doc, ...{venue: res.data.venue}};
 						} else {
+							console.log("The venue with this does not exist.", event.venue)
 							delete event.venue
 						}
 					})
@@ -92,9 +93,9 @@ router.post('/', async (req, res) => {
 
 	try {
 		const newEvent = await event.save()
-		res.status(201).json(newEvent)
+		return res.status(201).json(newEvent)
 	} catch (e) {
-		res.status(400).json({message: e.message})
+		return res.status(400).json({message: e.message})
 	}
 })
 
@@ -126,9 +127,9 @@ router.patch('/:id', getEvent, async (req, res) => {
 
 	try {
 		const updatedEvent = await res.event.save()
-		res.json(updatedEvent)
+		return res.json(updatedEvent)
 	} catch (e) {
-		res.status(400).json({message: e.message})
+		return res.status(400).json({message: e.message})
 	}
 })
 
@@ -136,9 +137,9 @@ router.patch('/:id', getEvent, async (req, res) => {
 router.delete('/:id', getEvent, async (req, res) => {
 	try {
 		await res.event.remove()
-		res.status(204)
+		return res.status(204)
 	} catch (e) {
-		res.status(500).json({message: e.message})
+		return res.status(500).json({message: e.message})
 	}
 })
 
