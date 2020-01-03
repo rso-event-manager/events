@@ -3,8 +3,8 @@ const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
 const consul = require('consul')({
-	host: "consul.service.consul",
-	port: 8085,
+	host: "127.0.0.1",
+	port: 3128,
 })
 
 const watcher = consul.watch({
