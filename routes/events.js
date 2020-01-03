@@ -1,26 +1,69 @@
 const express = require('express')
 const router = express.Router()
 const Event = require('../models/event')
+const fetch = require('node-fetch')
+const consul = require('consul')({
+	host: "127.0.0.1",
+	port: 8500,
+})
+
+const watcher = consul.watch({
+	method: consul.health.service,
+	options: {
+		service: 'venues',
+		passing: true
+	}
+});
+
+let venuesService = null
+
+watcher.on('change', data => {
+	venuesService = null
+
+	let entry = data.find(entry => entry.Service.Service === "venues")
+	if (entry) venuesService = `http://${entry.Service.Address}:${entry.Service.Port}/`
+});
 
 // get all events
 router.get('/', async (req, res) => {
 	try {
-		const events = await Event.find()
-		res.status(200).json(events)
+		let events = await Event.find()
+		events = events.map(async (event) => {
+			if (event.venue) {
+				await getVenue(event.venue)
+					.then(res => {
+						if (res && res.data && res.data.venue) {
+							event = {...event._doc, ...{venue: res.data.venue}};
+						} else {
+							delete event.venue
+						}
+					})
+			}
+			return event
+		})
+		Promise.all(events).then(events => res.status(200).json(events))
 	} catch (e) {
-		res.status(500).json({ message: e.message })
+		res.status(500).json({message: e.message})
 	}
 })
 
 // get one event
-router.get('/:id', getEvent, (req, res) => {
-	res.json(res.event)
+router.get('/:id', getEvent, async (req, res) => {
+	if (res.event.venue) {
+		await getVenue(res.event.venue)
+			.then(res => {
+				if (res && res.data && res.data.venue) {
+					res.event = {...res.event._doc, ...{venue: res.data.venue}};
+				}
+			})
+	}
+	return res.status(200).json(res.event)
 })
 
 // create one event
-router.post('/',  async (req, res) => {
+router.post('/', async (req, res) => {
 	if (req.body.startDate && req.body.endDate && (new Date(req.body.startDate)).getTime() >= (new Date(req.body.endDate)).getTime()) {
-		return res.status(400).json({ message: 'Start date cannot be equal or greater than the end date'})
+		return res.status(400).json({message: 'Start date cannot be equal or greater than the end date'})
 	}
 
 	const event = new Event({
@@ -43,11 +86,15 @@ router.post('/',  async (req, res) => {
 		event.price = req.body.price
 	}
 
+	if (req.body.venue) {
+		event.venue = req.body.venue
+	}
+
 	try {
 		const newEvent = await event.save()
 		res.status(201).json(newEvent)
 	} catch (e) {
-		res.status(400).json({ message: e.message })
+		res.status(400).json({message: e.message})
 	}
 })
 
@@ -73,11 +120,15 @@ router.patch('/:id', getEvent, async (req, res) => {
 		res.event.price = req.body.price
 	}
 
+	if (req.body.venue != null) {
+		res.event.venue = req.body.venue
+	}
+
 	try {
 		const updatedEvent = await res.event.save()
 		res.json(updatedEvent)
-	} catch(e) {
-		res.status(400).json({ message: e.message })
+	} catch (e) {
+		res.status(400).json({message: e.message})
 	}
 })
 
@@ -87,7 +138,7 @@ router.delete('/:id', getEvent, async (req, res) => {
 		await res.event.remove()
 		res.status(204)
 	} catch (e) {
-		res.status(500).json({ message: e.message })
+		res.status(500).json({message: e.message})
 	}
 })
 
@@ -97,14 +148,40 @@ async function getEvent(req, res, next) {
 	try {
 		event = await Event.findById(req.params.id)
 		if (!event) {
-			return res.status(404).json({ message: 'Can\'t find event.' })
+			return res.status(404).json({message: 'Can\'t find event.'})
 		}
 	} catch (e) {
-		return res.status(500).json({ message: e.message })
+		return res.status(500).json({message: e.message})
 	}
 
 	res.event = event
 	next()
+}
+
+async function getVenue(id) {
+	if (!venuesService) return;
+
+	const query = {
+		"query": `{
+			venue(id: "${id}") {
+				name
+				description
+				capacity
+			}
+		}`
+	}
+
+	const res = await fetch(`${venuesService}graphql`, {
+		method: "POST",
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(query),
+	})
+
+	const data = await res.json()
+
+	return data
 }
 
 module.exports = router

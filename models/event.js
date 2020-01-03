@@ -17,6 +17,9 @@ const eventSchema = new mongoose.Schema({
 	price: {
 		type: Number,
 	},
+	venue: {
+		type: mongoose.SchemaTypes.ObjectId,
+	}
 })
 
 module.exports = mongoose.model('Event', eventSchema)

@@ -9,7 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "consul": "^0.36.0",
     "express": "^4.17.1",
-    "mongoose": "^5.7.11"
-  }
+    "mongoose": "^5.7.11",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {}
 }
