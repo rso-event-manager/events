@@ -13,7 +13,7 @@ spec:
         app: events
     spec:
       containers:
-      - image: ribvid/rso-events:latest
+      - image: ribvid/rso-events:1.0.2
         name: events
         env:
         - name: DATABASE_URL
