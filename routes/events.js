@@ -4,7 +4,7 @@ const Event = require('../models/event')
 const fetch = require('node-fetch')
 const consul = require('consul')({
 	host: "127.0.0.1",
-	port: 8300,
+	port: 8500,
 })
 
 const watcher = consul.watch({
