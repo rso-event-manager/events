@@ -2,10 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
-const consul = require('consul')({
-	host: "127.0.0.1",
-	port: 443,
-})
+const consul = require('consul')()
 
 const watcher = consul.watch({
 	method: consul.health.service,
