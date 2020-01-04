@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
 })
 
 // get one event
-router.get('/:id', getEvent, async (req, res) => {
+router.get('/event/:id', getEvent, async (req, res) => {
 	if (res.event.venue) {
 		await getVenue(res.event.venue)
 			.then(res => {
@@ -63,7 +63,7 @@ router.get('/:id', getEvent, async (req, res) => {
 })
 
 // create one event
-router.post('/', async (req, res) => {
+router.post('/event', async (req, res) => {
 	if (req.body.startDate && req.body.endDate && (new Date(req.body.startDate)).getTime() >= (new Date(req.body.endDate)).getTime()) {
 		return res.status(400).json({message: 'Start date cannot be equal or greater than the end date'})
 	}
@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
 })
 
 // update one event
-router.patch('/:id', getEvent, async (req, res) => {
+router.patch('/event/:id', getEvent, async (req, res) => {
 	if (req.body.name != null) {
 		res.event.name = req.body.name
 	}
@@ -135,7 +135,7 @@ router.patch('/:id', getEvent, async (req, res) => {
 })
 
 // delete one event
-router.delete('/:id', getEvent, async (req, res) => {
+router.delete('/event/:id', getEvent, async (req, res) => {
 	try {
 		await res.event.remove()
 		return res.status(204)
