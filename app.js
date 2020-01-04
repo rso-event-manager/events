@@ -3,6 +3,11 @@ const app = express()
 const port = 3000
 const mongoose = require('mongoose');
 const consul = require('./helpers/consul')
+const { createLightship } = require('lightship')
+
+const lightship = createLightship({
+	detectKubernetes: false,
+})
 
 const watcher = consul.watch({
 	method: consul.kv.get,
@@ -15,8 +20,14 @@ watcher.on('change', data => {
 	})
 
 	const db = mongoose.connection
-	db.on('error', (error) => console.error(`Cannot connect to db ${data.Value}. ${error.message}`))
-	db.once('open', (error) => console.log('Connected to db'))
+	db.on('error', (error) => {
+		console.error(`Cannot connect to db ${data.Value}. ${error.message}`)
+		lightship.signalNotReady()
+	})
+	db.once('open', (error) => {
+		console.log('Connected to db')
+		lightship.signalReady()
+	})
 })
 
 app.use(express.json())
@@ -24,8 +35,7 @@ app.use(express.json())
 const eventsRouter = require('./routes/events')
 app.use('/events', eventsRouter)
 
-app.get('/', async (req, res) => {
-	res.send('Hello World!')
+app.listen(port, () => {
+	console.log(`Server started`)
+	lightship.signalReady()
 })
-
-app.listen(port, () => console.log(`Server started`))

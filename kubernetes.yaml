@@ -13,27 +13,50 @@ spec:
         app: events
     spec:
       containers:
-      - image: ribvid/rso-events:1.0.6
-        name: events
-        env:
-        - name: CONSUL
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        ports:
-        - containerPort: 3000
-          name: server
-          protocol: TCP
+        - image: ribvid/rso-events:1.0.7
+          name: events
+          env:
+            - name: CONSUL
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          ports:
+            - containerPort: 3000
+              name: server
+              protocol: TCP
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: events
 spec:
-#  type: LoadBalancer
+  #  type: LoadBalancer
   ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 3000
+    - port: 80
+      protocol: TCP
+      targetPort: 3000
   selector:
     app: events
+---
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 9000
+  failureThreshold: 1
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  successThreshold: 1
+  timeoutSeconds: 5
+livenessProbe:
+  httpGet:
+    path: /live
+    port: 9000
+  failureThreshold: 3
+  initialDelaySeconds: 10
+  # Allow sufficient amount of time (180 seconds = periodSeconds * failureThreshold)
+  # for the registered shutdown handlers to run to completion.
+  periodSeconds: 30
+  successThreshold: 1
+  # Setting a very low timeout value (e.g. 1 second) can cause false-positive
+  # checks and service interruption.
+  timeoutSeconds: 5
