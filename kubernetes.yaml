@@ -30,7 +30,7 @@ spec:
               path: /live
               port: 9000
             failureThreshold: 3
-            initialDelaySeconds: 10
+            initialDelaySeconds: 5
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 5
@@ -38,8 +38,8 @@ spec:
             httpGet:
               path: /ready
               port: 9000
-            failureThreshold: 1
             initialDelaySeconds: 5
+            failureThreshold: 2
             periodSeconds: 5
             successThreshold: 1
             timeoutSeconds: 5
