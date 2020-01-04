@@ -28,7 +28,7 @@ watcher.on('change', data => {
 app.use(express.json())
 
 const eventsRouter = require('./routes/events')
-app.use('/', eventsRouter)
+app.use('/events', eventsRouter)
 
 app.use('/unhealthy', (req, res) => {
 	lightship.signalNotReady()
