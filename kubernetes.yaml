@@ -49,7 +49,7 @@ kind: Service
 metadata:
   name: events
 spec:
-  type: LoadBalancer
+#  type: LoadBalancer
   ports:
     - port: 80
       protocol: TCP
