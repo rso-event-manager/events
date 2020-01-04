@@ -30,7 +30,9 @@ app.use(express.json())
 const eventsRouter = require('./routes/events')
 app.use('/events', eventsRouter)
 
-app.use('/', (req, res) => res.send('Test3'))
+app.use('/unhealthy', (req, res) => {
+	throw new Error('Pow, boom, splash')
+})
 
 app.listen(port, () => {
 	console.log(`Server started`)
