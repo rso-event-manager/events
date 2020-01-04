@@ -13,7 +13,7 @@ spec:
         app: events
     spec:
       containers:
-      - image: ribvid/rso-events:1.0.5
+      - image: ribvid/rso-events:1.0.6
         name: events
         env:
         - name: CONSUL

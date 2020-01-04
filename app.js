@@ -10,10 +10,12 @@ const watcher = consul.watch({
 })
 
 watcher.on('change', data => {
-	mongoose.connect(data.Value, {useNewUrlParser: true, useUnifiedTopology: true})
-	const db = mongoose.connection
+	mongoose.connect(data.Value, {useNewUrlParser: true, useUnifiedTopology: true}).catch(err => {
+		console.error(`Mongoose has failed. ${err.message}`)
+	})
 
-	db.on('error', (error) => console.error(error))
+	const db = mongoose.connection
+	db.on('error', (error) => console.error(`Cannot connect to db ${data.Value}. ${error.message}`))
 	db.once('open', (error) => console.log('Connected to db'))
 })
 
