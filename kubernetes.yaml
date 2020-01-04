@@ -13,11 +13,9 @@ spec:
         app: events
     spec:
       containers:
-      - image: ribvid/rso-events:1.0.4
+      - image: ribvid/rso-events:1.0.5
         name: events
         env:
-        - name: DATABASE_URL
-          value: mongodb://rso-events:kSziQAbCu8EF8X6WZmqlCU2mrhswWJfm5XtCEdk8PBifqEDm1TYmJ2lp44gxvDTjIB1pPaFCDQ6ZRCEFiueivg==@rso-events.documents.azure.com:10255/?ssl=true&replicaSet=globaldb
         - name: CONSUL
           valueFrom:
             fieldRef:

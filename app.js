@@ -2,12 +2,20 @@ const express = require('express')
 const app = express()
 const port = 3000
 const mongoose = require('mongoose');
+const consul = require('./helpers/consul')
 
-mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true, useUnifiedTopology: true})
-const db = mongoose.connection
+const watcher = consul.watch({
+	method: consul.kv.get,
+	options: { key: 'db/events' }
+})
 
-db.on('error', (error) => console.error(error))
-db.once('open', (error) => console.log('Connected to db'))
+watcher.on('change', data => {
+	mongoose.connect(data.Value, {useNewUrlParser: true, useUnifiedTopology: true})
+	const db = mongoose.connection
+
+	db.on('error', (error) => console.error(error))
+	db.once('open', (error) => console.log('Connected to db'))
+})
 
 app.use(express.json())
 
