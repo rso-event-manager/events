@@ -13,7 +13,7 @@ spec:
         app: events
     spec:
       containers:
-      - image: ribvid/rso-events:1.0.2
+      - image: ribvid/rso-events:1.0.4
         name: events
         env:
         - name: DATABASE_URL
@@ -32,7 +32,7 @@ kind: Service
 metadata:
   name: events
 spec:
-  type: LoadBalancer
+#  type: LoadBalancer
   ports:
   - port: 80
     protocol: TCP

@@ -6,7 +6,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: /account(/|$)(.*)
+          - path: /events
             backend:
               serviceName: events
               servicePort: 80
