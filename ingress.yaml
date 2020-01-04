@@ -1,0 +1,12 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: events-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /account(/|$)(.*)
+            backend:
+              serviceName: events
+              servicePort: 80

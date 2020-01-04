@@ -14,6 +14,10 @@ app.use(express.json())
 const eventsRouter = require('./routes/events')
 app.use('/events', eventsRouter)
 
+app.get('/', async (req, res) => {
+	res.send('Hello World!')
+})
+
 app.get('/mejnik', async (req, res) => {
 	res.status(200).json({
 		"clani": ["vr9223"],
