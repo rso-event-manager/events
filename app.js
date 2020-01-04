@@ -37,8 +37,9 @@ app.use('/unhealthy', (req, res) => {
 
 const server = app.listen(port, () => {
 	console.log(`Server started`)
-	lightship.signalReady()
 })
+
+lightship.signalReady()
 
 lightship.registerShutdownHandler(() => {
 	server.close();
