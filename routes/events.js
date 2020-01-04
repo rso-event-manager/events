@@ -22,7 +22,7 @@ watcher.on('change', data => {
 });
 
 watcher.on('error', err => {
-	lightship.signalNotReady()
+	lightship.shutdown()
 });
 
 // get all events

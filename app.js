@@ -10,14 +10,17 @@ const watcher = consul.watch({
 })
 
 watcher.on('change', data => {
+	lightship.signalNotReady()
+
 	mongoose.connect(data.Value, {useNewUrlParser: true, useUnifiedTopology: true}).catch(err => {
 		console.error(`Mongoose has failed. ${err.message}`)
+		lightship.shutdown()
 	})
 
 	const db = mongoose.connection
 	db.on('error', (error) => {
 		console.error(`Cannot connect to db ${data.Value}. ${error.message}`)
-		lightship.signalNotReady()
+		lightship.shutdown()
 	})
 	db.once('open', (error) => {
 		console.log('Connected to db')
@@ -31,15 +34,14 @@ const eventsRouter = require('./routes/events')
 app.use('/', eventsRouter)
 
 app.use('/unhealthy', (req, res) => {
-	lightship.signalNotReady()
+	lightship.shutdown()
 	throw new Error('error')
 })
 
 const server = app.listen(port, () => {
 	console.log(`Server started`)
+	lightship.signalReady()
 })
-
-lightship.signalReady()
 
 lightship.registerShutdownHandler(() => {
 	server.close();
