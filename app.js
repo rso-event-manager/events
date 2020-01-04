@@ -32,7 +32,7 @@ app.use('/', eventsRouter)
 
 app.use('/unhealthy', (req, res) => {
 	lightship.signalNotReady()
-	process.exit()
+	throw new Error('error')
 })
 
 app.listen(port, () => {
