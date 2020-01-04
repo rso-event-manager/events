@@ -30,6 +30,8 @@ app.use(express.json())
 const eventsRouter = require('./routes/events')
 app.use('/events', eventsRouter)
 
+app.use('/', (req, res) => res.send('Test'))
+
 app.listen(port, () => {
 	console.log(`Server started`)
 	lightship.signalReady()
