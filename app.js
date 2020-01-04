@@ -30,7 +30,7 @@ app.use(express.json())
 const eventsRouter = require('./routes/events')
 app.use('/events', eventsRouter)
 
-app.use('/', (req, res) => res.send('Test'))
+app.use('/', (req, res) => res.send('Test2'))
 
 app.listen(port, () => {
 	console.log(`Server started`)

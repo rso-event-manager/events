@@ -20,6 +20,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: server
@@ -48,7 +49,7 @@ kind: Service
 metadata:
   name: events
 spec:
-#  type: LoadBalancer
+  type: LoadBalancer
   ports:
     - port: 80
       protocol: TCP

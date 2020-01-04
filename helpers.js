@@ -4,9 +4,7 @@ const consul = require('consul')({
 })
 
 const { createLightship } = require('lightship')
-const lightship = createLightship({
-	detectKubernetes: false,
-})
+const lightship = createLightship()
 
 module.exports = {
 	consul: consul,
