@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
-const consul = require('../helpers/consul')
+const { consul, lightship } = require('../helpers')
 
 const watcher = consul.watch({
 	method: consul.health.service,
@@ -19,6 +19,10 @@ watcher.on('change', data => {
 
 	let entry = data.find(entry => entry.Service.Service === "venues")
 	if (entry) venuesService = `http://${entry.Service.Address}:${entry.Service.Port}/`
+});
+
+watcher.on('error', err => {
+	lightship.signalNotReady()
 });
 
 // get all events
@@ -41,6 +45,7 @@ router.get('/', async (req, res) => {
 		})
 		Promise.all(events).then(events => res.status(200).json(events))
 	} catch (e) {
+		lightship.signalNotReady()
 		res.status(500).json({message: e.message})
 	}
 })
@@ -92,6 +97,7 @@ router.post('/', async (req, res) => {
 		const newEvent = await event.save()
 		return res.status(201).json(newEvent)
 	} catch (e) {
+		lightship.signalNotReady()
 		return res.status(400).json({message: e.message})
 	}
 })
@@ -126,6 +132,7 @@ router.patch('/:id', getEvent, async (req, res) => {
 		const updatedEvent = await res.event.save()
 		return res.json(updatedEvent)
 	} catch (e) {
+		lightship.signalNotReady()
 		return res.status(400).json({message: e.message})
 	}
 })
@@ -136,6 +143,7 @@ router.delete('/:id', getEvent, async (req, res) => {
 		await res.event.remove()
 		return res.status(204)
 	} catch (e) {
+		lightship.signalNotReady()
 		return res.status(500).json({message: e.message})
 	}
 })
@@ -146,14 +154,16 @@ async function getEvent(req, res, next) {
 	try {
 		event = await Event.findById(req.params.id)
 		if (!event) {
+			lightship.signalNotReady()
 			return res.status(404).json({message: 'Can\'t find event.'})
 		}
 	} catch (e) {
+		lightship.signalNotReady()
 		return res.status(500).json({message: e.message})
 	}
 
 	res.event = event
-	next()
+	return next()
 }
 
 async function getVenue(id) {

@@ -2,12 +2,7 @@ const express = require('express')
 const app = express()
 const port = 3000
 const mongoose = require('mongoose');
-const consul = require('./helpers/consul')
-const { createLightship } = require('lightship')
-
-const lightship = createLightship({
-	detectKubernetes: false,
-})
+const { consul, lightship } = require('./helpers')
 
 const watcher = consul.watch({
 	method: consul.kv.get,
