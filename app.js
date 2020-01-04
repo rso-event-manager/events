@@ -10,17 +10,15 @@ const watcher = consul.watch({
 })
 
 watcher.on('change', data => {
-	lightship.signalNotReady()
-
 	mongoose.connect(data.Value, {useNewUrlParser: true, useUnifiedTopology: true}).catch(err => {
 		console.error(`Mongoose has failed. ${err.message}`)
-		lightship.shutdown()
+		lightship.signalNotReady()
 	})
 
 	const db = mongoose.connection
 	db.on('error', (error) => {
 		console.error(`Cannot connect to db ${data.Value}. ${error.message}`)
-		lightship.shutdown()
+		lightship.signalNotReady()
 	})
 	db.once('open', (error) => {
 		console.log('Connected to db')
