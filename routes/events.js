@@ -28,7 +28,7 @@ watcher.on('error', err => {
 
 // get all events
 router.get('/', async (req, res) => {
-	logger.log('Get all events')
+	logger.info('Get all events')
 	try {
 		let events = await Event.find()
 		events = events.map(async (event) => {
@@ -38,14 +38,15 @@ router.get('/', async (req, res) => {
 						if (res && res.data && res.data.venue) {
 							event = {...event._doc, ...{venue: res.data.venue}};
 						} else {
-							console.log("The venue with this does not exist.", event.venue)
+							console.log("The venue with this id does not exist.", event.venue)
+							logger.info(`The venue with this id ${event.venue} does not exist.`)
 							delete event.venue
 						}
 					})
 			}
 			return event
 		})
-		logger.log(JSON.stringify(events))
+		logger.info(JSON.stringify(events))
 		Promise.all(events).then(events => res.status(200).json(events))
 	} catch (e) {
 		logger.error(e.message)
@@ -55,7 +56,7 @@ router.get('/', async (req, res) => {
 
 // get one event
 router.get('/event/:id', getEvent, async (req, res) => {
-	logger.log(`Get event ${req.params.id}`)
+	logger.info(`Get event ${req.params.id}`)
 	if (res.event.venue) {
 		await getVenue(res.event.venue)
 			.then(res => {
@@ -64,13 +65,13 @@ router.get('/event/:id', getEvent, async (req, res) => {
 				}
 			})
 	}
-	logger.log(JSON.stringify(res.event))
+	logger.info(JSON.stringify(res.event))
 	return res.status(200).json(res.event)
 })
 
 // create one event
 router.post('/event', async (req, res) => {
-	logger.log('Create event')
+	logger.info('Create event')
 	if (req.body.startDate && req.body.endDate && (new Date(req.body.startDate)).getTime() >= (new Date(req.body.endDate)).getTime()) {
 		logger.warn('Start date cannot be equal or greater than the end date')
 		return res.status(400).json({message: 'Start date cannot be equal or greater than the end date'})
@@ -102,7 +103,7 @@ router.post('/event', async (req, res) => {
 
 	try {
 		const newEvent = await event.save()
-		logger.log(JSON.stringify(newEvent))
+		logger.info(JSON.stringify(newEvent))
 		return res.status(201).json(newEvent)
 	} catch (e) {
 		logger.error(e.message)
@@ -112,7 +113,7 @@ router.post('/event', async (req, res) => {
 
 // update one event
 router.patch('/event/:id', getEvent, async (req, res) => {
-	logger.log(`Update event ${req.params.id}`)
+	logger.info(`Update event ${req.params.id}`)
 
 	if (req.body.name != null) {
 		res.event.name = req.body.name
@@ -149,7 +150,7 @@ router.patch('/event/:id', getEvent, async (req, res) => {
 
 // delete one event
 router.delete('/event/:id', getEvent, async (req, res) => {
-	logger.log(`Delete event ${req.params.id}`)
+	logger.info(`Delete event ${req.params.id}`)
 
 	try {
 		await res.event.remove()
@@ -161,7 +162,7 @@ router.delete('/event/:id', getEvent, async (req, res) => {
 })
 
 async function getEvent(req, res, next) {
-	logger.log(`Find event by ID in Mongo ${req.params.id}`)
+	logger.info(`Find event by ID in Mongo ${req.params.id}`)
 
 	let event
 
@@ -181,7 +182,7 @@ async function getEvent(req, res, next) {
 }
 
 async function getVenue(id) {
-	logger.log(`Get venue ${id}`)
+	logger.info(`Get venue ${id}`)
 
 	if (!venuesService) {
 		logger.warn('Venues service is unavailable')
@@ -198,7 +199,7 @@ async function getVenue(id) {
 		}`
 	}
 
-	logger.log(`Fetch venue at ${venuesService}. Query: ${query}`)
+	logger.info(`Fetch venue at ${venuesService}. Query: ${query}`)
 
 	const res = await fetch(`${venuesService}graphql`, {
 		method: "POST",

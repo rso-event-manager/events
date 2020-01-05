@@ -26,7 +26,6 @@ const additionalWinstonData = {
 const logger = {
 	info: (msg) => winston.info(msg, additionalWinstonData),
 	error: (msg) => winston.error(msg, additionalWinstonData),
-	log: (msg) => winston.log(msg, additionalWinstonData),
 	warn: (msg) => winston.warn(msg, additionalWinstonData),
 }
 
