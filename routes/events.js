@@ -158,16 +158,28 @@ router.patch('/event/:id', async (req, res) => {
 })
 
 // delete one event
-router.delete('/event/:id', getEvent, async (req, res) => {
+router.delete('/event/:id', async (req, res) => {
+	if (!req.params.id) {
+		logger.warn(`Cannot delete event because id is missing.`)
+		return
+	}
+
 	logger.info(`Delete event ${req.params.id}`)
 
-	try {
-		await res.event.remove()
-		return res.status(204)
-	} catch (e) {
-		logger.error(e.message)
-		return res.status(500).json({message: e.message})
-	}
+	return Event.deleteOne({ _id: req.params.id })
+		.then(res => {
+			if (res.deletedCount > 0) {
+				logger.info(`Event (${req.params.id}) has been successfully deleted`)
+				return res.status(204)
+			} else {
+				logger.error(`Event (${req.params.id}) has not been deleted. Something went wrong`)
+				return res.status(500)
+			}
+		})
+		.catch(err => {
+			logger.error(err.message)
+			return res.status(400).json({message: err.message})
+		})
 })
 
 async function getEvent(req, res, next) {
