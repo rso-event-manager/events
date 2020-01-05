@@ -12,7 +12,7 @@ const watcher = consul.watch({
 watcher.on('change', data => {
 	mongoose.connect(data.Value, {useNewUrlParser: true, useUnifiedTopology: true}).catch(err => {
 		console.error(`Mongoose has failed. ${err.message}`)
-		winston.error(`Mongoose has failed. ${err.message}`, { name: process.env.NAME, version: process.env.VERSION, Environment: process.env.NODE_ENV })
+		winston.error(`Mongoose has failed. ${err.message}`)
 		lightship.signalNotReady()
 	})
 
@@ -24,7 +24,7 @@ watcher.on('change', data => {
 	})
 	db.once('open', (error) => {
 		console.log('Connected to db')
-		winston.info("Connected to db", { name: process.env.NAME, version: process.env.VERSION, Environment: process.env.NODE_ENV });
+		winston.info("Connected to db")
 		lightship.signalReady()
 	})
 })

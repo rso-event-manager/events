@@ -9,7 +9,29 @@ const lightship = createLightship()
 const winston = require('winston');
 require('winston-logstash');
 
-winston.add(winston.transports.Logstash, {
+const logger = winston.createLogger(
+	{
+		level: 'info',
+		format: winston.format.json(),
+		defaultMeta: {
+			name: "events",
+			podName: process.env.NAME,
+			version: process.env.VERSION,
+			Environment: process.env.NODE_ENV
+		},
+	}, {
+		level: 'error',
+		format: winston.format.json(),
+		defaultMeta: {
+			name: "events",
+			podName: process.env.NAME,
+			version: process.env.VERSION,
+			Environment: process.env.NODE_ENV
+		},
+	},
+)
+
+logger.add(winston.transports.Logstash, {
 	port: 11667,
 	host: '3f5a38c5-2098-4987-b32e-7f9815e9aaaf-ls.logit.io',
 	ssl_enable: true,
@@ -19,5 +41,5 @@ winston.add(winston.transports.Logstash, {
 module.exports = {
 	consul: consul,
 	lightship: lightship,
-	winston: winston,
+	winston: logger,
 }
