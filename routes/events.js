@@ -170,10 +170,10 @@ router.delete('/event/:id', async (req, res) => {
 		.then(result => {
 			if (result.deletedCount > 0) {
 				logger.info(`Event (${req.params.id}) has been successfully deleted`)
-				return res.status(204)
+				return res.status(204).send()
 			} else {
 				logger.error(`Event (${req.params.id}) has not been deleted. Something went wrong`)
-				return res.status(500)
+				return res.status(500).send()
 			}
 		})
 		.catch(err => {
