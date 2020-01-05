@@ -2,35 +2,65 @@ const express = require('express')
 const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
-const { consul, lightship, logger } = require('../helpers')
-
-const watcher = consul.watch({
-	method: consul.health.service,
-	options: {
-		service: 'venues',
-		passing: true
-	}
-});
+const {consul, lightship, logger} = require('../helpers')
 
 let venuesService = null
 
-watcher.on('change', data => {
-	venuesService = null
+if (process.env.NODE_ENV === 'prod') {
+	const watcher = consul.watch({
+		method: consul.health.service,
+		options: {
+			service: 'venues',
+			passing: true
+		}
+	});
 
-	let entry = data.find(entry => entry.Service.Service === "venues")
-	if (entry) venuesService = `http://${entry.Service.Address}:${entry.Service.Port}/`
-});
+	watcher.on('change', data => {
+		venuesService = null
 
-watcher.on('error', err => {
-	logger.error(err.message)
-	lightship.shutdown()
-});
+		let entry = data.find(entry => entry.Service.Service === "venues")
+		if (entry) venuesService = `http://${entry.Service.Address}:${entry.Service.Port}/`
+	});
+
+	watcher.on('error', err => {
+		logger.error(err.message)
+		lightship.shutdown()
+	});
+}
 
 // get all events
 router.get('/', async (req, res) => {
 	logger.info('Get all events')
+
 	try {
-		let events = await Event.find()
+		let query = {}
+
+		if (req.query.startDate) {
+			let date1 = new Date(req.query.startDate).toISOString()
+
+			let date2 = new Date(req.query.startDate)
+			date2.setDate(date2.getDate() + 1)
+			date2 = date2.toISOString()
+
+			logger.info(`Query events by start date (${date1} - ${date2})`)
+
+			query["startDate"] = { $gte: date1, $lt: date2 }
+		}
+
+		if (req.query.endDate) {
+			let date1 = new Date(req.query.endDate).toISOString()
+
+			let date2 = new Date(req.query.endDate)
+			date2.setDate(date2.getDate() + 1)
+			date2 = date2.toISOString()
+
+			logger.info(`Query events by end date (${date1} - ${date2})`)
+
+			query["endDate"] = { $gte: date1, $lt: date2 }
+		}
+
+		let events = await Event.find(query)
+
 		events = events.map(async (event) => {
 			if (event.venue) {
 				await getVenue(event.venue)
@@ -39,14 +69,16 @@ router.get('/', async (req, res) => {
 							event = {...event._doc, ...{venue: res.data.venue}};
 						} else {
 							console.log("The venue with this id does not exist.", event.venue)
-							logger.info(`The venue with this id ${event.venue} does not exist.`)
+							logger.warn(`The venue with this id ${event.venue} does not exist.`)
 							delete event.venue
 						}
 					})
 			}
 			return event
 		})
+
 		logger.info(JSON.stringify(events))
+
 		Promise.all(events).then(events => res.status(200).json(events))
 	} catch (e) {
 		logger.error(e.message)
@@ -72,80 +104,57 @@ router.get('/event/:id', getEvent, async (req, res) => {
 // create one event
 router.post('/event', async (req, res) => {
 	logger.info('Create event')
+
 	if (req.body.startDate && req.body.endDate && (new Date(req.body.startDate)).getTime() >= (new Date(req.body.endDate)).getTime()) {
-		logger.warn('Start date cannot be equal or greater than the end date')
+		logger.warn('Cannot create new event, because start date cannot be equal or greater than the end date.')
 		return res.status(400).json({message: 'Start date cannot be equal or greater than the end date'})
 	}
 
 	const event = new Event({
 		name: req.body.name,
+		startDate: req.body.startDate,
+		endDate: req.body.endDate,
+		numberOfTickets: req.body.numberOfTickets,
+		price: req.body.price,
+		venue: req.body.venue,
+		_createdAt: new Date(),
 	})
 
-	if (req.body.startDate) {
-		event.startDate = req.body.startDate
-	}
-
-	if (req.body.endDate) {
-		event.endDate = req.body.endDate
-	}
-
-	if (req.body.numberOfTickets) {
-		event.numberOfTickets = req.body.numberOfTickets
-	}
-
-	if (req.body.price) {
-		event.price = req.body.price
-	}
-
-	if (req.body.venue) {
-		event.venue = req.body.venue
-	}
-
-	try {
-		const newEvent = await event.save()
-		logger.info(JSON.stringify(newEvent))
-		return res.status(201).json(newEvent)
-	} catch (e) {
-		logger.error(e.message)
-		return res.status(400).json({message: e.message})
-	}
+	return event
+		.save()
+		.then(result => {
+			logger.info(`Event with id ${result._id} was successfully created.`)
+			return res.status(201).json(result)
+		})
+		.catch(err => {
+			logger.error(err.message)
+			return res.status(400).json({message: err.message})
+		});
 })
 
 // update one event
-router.patch('/event/:id', getEvent, async (req, res) => {
+router.patch('/event/:id', async (req, res) => {
+	if (!req.params.id) {
+		logger.warn(`Cannot update event because id is missing.`)
+		return
+	}
+
+	if (req.body.startDate && req.body.endDate && (new Date(req.body.startDate)).getTime() >= (new Date(req.body.endDate)).getTime()) {
+		logger.warn(`Cannot update event with id ${req.params.id}, because start date cannot be equal or greater than the end date.`)
+		return res.status(400).json({message: 'Start date cannot be equal or greater than the end date'})
+	}
+
 	logger.info(`Update event ${req.params.id}`)
 
-	if (req.body.name != null) {
-		res.event.name = req.body.name
-	}
-
-	if (req.body.startDate != null) {
-		res.event.startDate = req.body.startDate
-	}
-
-	if (req.body.endDate != null) {
-		res.event.endDate = req.body.endDate
-	}
-
-	if (req.body.numberOfTickets != null) {
-		res.event.numberOfTickets = req.body.numberOfTickets
-	}
-
-	if (req.body.price != null) {
-		res.event.price = req.body.price
-	}
-
-	if (req.body.venue != null) {
-		res.event.venue = req.body.venue
-	}
-
-	try {
-		const updatedEvent = await res.event.save()
-		return res.json(updatedEvent)
-	} catch (e) {
-		logger.error(e.message)
-		return res.status(400).json({message: e.message})
-	}
+	Event.findOneAndUpdate({_id: req.params.id}, {...req.body, _updatedAt: new Date()}, {new: true})
+		.then(updatedEvent => {
+			logger.info(`Event with id ${req.params.id} was successfully updated.`)
+			return res.status(200).json(updatedEvent)
+		})
+		.catch(err => {
+			logger.error(err.message)
+			return res.status(400).json({message: err.message})
+		})
 })
 
 // delete one event

@@ -19,7 +19,13 @@ const eventSchema = new mongoose.Schema({
 	},
 	venue: {
 		type: mongoose.SchemaTypes.ObjectId,
-	}
+	},
+	_createdAt: {
+		type: Date,
+	},
+	_updatedAt: {
+		type: Date,
+	},
 })
 
 module.exports = mongoose.model('Event', eventSchema)
