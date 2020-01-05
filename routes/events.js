@@ -213,6 +213,7 @@ async function getVenue(id) {
 	const query = {
 		"query": `{
 			venue(id: "${id}") {
+				_id
 				name
 				description
 				capacity
