@@ -66,7 +66,8 @@ router.get('/', async (req, res) => {
 				await getVenue(event.venue)
 					.then(res => {
 						if (res && res.data && res.data.venue) {
-							event = {...event._doc, ...{venue: res.data.venue}};
+							console.log(event)
+							event = {...event, ...{venue: res.data.venue}};
 						} else {
 							console.log("The venue with this id does not exist.", event.venue)
 							logger.warn(`The venue with this id ${event.venue} does not exist.`)
