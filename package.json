@@ -10,11 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "consul": "^0.36.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "lightship": "^4.3.7",
     "mongoose": "^5.7.11",
     "node-fetch": "^2.6.0",
-    "restify-cors-middleware": "^1.1.1",
     "winston": "^2.4.1",
     "winston-logstash": "^0.4.0"
   },

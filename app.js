@@ -3,14 +3,7 @@ const app = express()
 const port = 3000
 const mongoose = require('mongoose');
 const { consul, lightship, logger } = require('./helpers')
-const corsMiddleware = require('restify-cors-middleware');
-
-let cors = corsMiddleware({
-	preflightMaxAge: 5,
-	origins: ['*'],
-	allowHeaders:['X-App-Version'],
-	exposeHeaders:[]
-});
+const cors = require('cors')
 
 const connect = (dbURL) => {
 	mongoose.connect(dbURL, {useNewUrlParser: true, useUnifiedTopology: true}).catch(err => {
@@ -47,6 +40,7 @@ if (process.env.NODE_ENV === 'prod') {
 }
 
 app.use(express.json())
+app.use(cors())
 
 const eventsRouter = require('./routes/events')
 app.use('/', eventsRouter)
@@ -61,9 +55,6 @@ const server = app.listen(port, () => {
 	logger.info("Server started");
 	lightship.signalReady()
 })
-
-server.pre(cors.preflight);
-server.use(cors.actual);
 
 lightship.registerShutdownHandler(() => {
 	server.close();
