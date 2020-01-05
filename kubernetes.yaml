@@ -19,7 +19,9 @@ spec:
             - name: ROARR_LOG
               value: "true"
             - name: NAME
-              value: metadata.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: VERSION
               value: 1.0.7
             - name: CONSUL
