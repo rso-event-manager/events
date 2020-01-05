@@ -97,7 +97,6 @@ router.get('/event/:id', getEvent, async (req, res) => {
 				}
 			})
 	}
-	logger.info(JSON.stringify(res.event))
 	return res.status(200).json(res.event)
 })
 
@@ -122,8 +121,16 @@ router.post('/event', async (req, res) => {
 
 	return event
 		.save()
-		.then(result => {
+		.then(async (result) => {
 			logger.info(`Event with id ${result._id} was successfully created.`)
+
+			await getVenue(result.venue)
+				.then(response => {
+					if (response && response.data && response.data.venue) {
+						result = {...result._doc, ...{venue: response.data.venue}};
+					}
+				})
+
 			return res.status(201).json(result)
 		})
 		.catch(err => {
@@ -221,7 +228,7 @@ async function getVenue(id) {
 		}`
 	}
 
-	logger.info(`Fetch venue at ${venuesService}. Query: ${query}`)
+	logger.info(`Fetch venue at ${venuesService}`)
 
 	const res = await fetch(`${venuesService}graphql`, {
 		method: "POST",
