@@ -167,8 +167,8 @@ router.delete('/event/:id', async (req, res) => {
 	logger.info(`Delete event ${req.params.id}`)
 
 	return Event.deleteOne({ _id: req.params.id })
-		.then(res => {
-			if (res.deletedCount > 0) {
+		.then(result => {
+			if (result.deletedCount > 0) {
 				logger.info(`Event (${req.params.id}) has been successfully deleted`)
 				return res.status(204)
 			} else {
