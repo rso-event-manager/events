@@ -181,7 +181,7 @@ async function getEvent(req, res, next) {
 }
 
 async function getVenue(id) {
-	logger.log(`Get venue ${req.params.id}`)
+	logger.log(`Get venue ${id}`)
 
 	if (!venuesService) {
 		logger.warn('Venues service is unavailable')
