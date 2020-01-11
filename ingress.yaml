@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - rso-aks-ingress.westeurope.cloudapp.azure.com
+        - rso-api.westeurope.cloudapp.azure.com
       secretName: tls-secret-prd
   rules:
-    - host: rso-aks-ingress.westeurope.cloudapp.azure.com
+    - host: rso-api.westeurope.cloudapp.azure.com
       http:
         paths:
           - path: /events(/|$)(.*)
