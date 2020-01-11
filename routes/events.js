@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
 
 			logger.info(`Query events by start date (${date1} - ${date2})`)
 
-			query["startDate"] = { $gte: date1, $lt: date2 }
+			query["startDate"] = {$gte: date1, $lt: date2}
 		}
 
 		if (req.query.endDate) {
@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
 
 			logger.info(`Query events by end date (${date1} - ${date2})`)
 
-			query["endDate"] = { $gte: date1, $lt: date2 }
+			query["endDate"] = {$gte: date1, $lt: date2}
 		}
 
 		let events = await Event.find(query)
@@ -173,7 +173,7 @@ router.delete('/event/:id', async (req, res) => {
 
 	logger.info(`Delete event ${req.params.id}`)
 
-	return Event.deleteOne({ _id: req.params.id })
+	return Event.deleteOne({_id: req.params.id})
 		.then(result => {
 			if (result.deletedCount > 0) {
 				logger.info(`Event (${req.params.id}) has been successfully deleted`)
@@ -182,6 +182,28 @@ router.delete('/event/:id', async (req, res) => {
 				logger.error(`Event (${req.params.id}) has not been deleted. Something went wrong`)
 				return res.status(500).send()
 			}
+		})
+		.catch(err => {
+			logger.error(err.message)
+			return res.status(400).json({message: err.message})
+		})
+})
+
+// handle ticket sale
+router.post('/sellTicket', async (req, res) => {
+	if (!req.body.eventId) {
+		logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
+		return
+	}
+
+	const eventId = req.body.eventId
+
+	logger.info('Decrease number of tickets for event with id ' + eventId)
+
+	Event.findOneAndUpdate({_id: eventId}, {$inc: {numberOfTickets: -1}})
+		.then(() => {
+			logger.info(`Event with id ${req.params.id} was successfully updated.`)
+			return res.status(200).json(`Event with id ${req.params.id} was successfully updated.`)
 		})
 		.catch(err => {
 			logger.error(err.message)
