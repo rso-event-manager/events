@@ -59,6 +59,14 @@ router.get('/', async (req, res) => {
 			query["endDate"] = {$gte: date1, $lt: date2}
 		}
 
+		if (req.query.from) {
+			let date = new Date(req.query.from).toISOString()
+
+			logger.info(`Query events since ${date}`)
+
+			query["startDate"] = {$gte: date}
+		}
+
 		let events = await Event.find(query)
 
 		events = events.map(async (event) => {
