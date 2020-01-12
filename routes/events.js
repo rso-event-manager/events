@@ -5,7 +5,6 @@ const fetch = require('node-fetch')
 const {consul, lightship, logger, rabbit} = require('../helpers')
 
 let venuesService = null
-let topic = 'events'
 
 if (process.env.NODE_ENV === 'prod') {
 	const watcher = consul.watch({
@@ -34,13 +33,23 @@ if (process.env.NODE_ENV === 'prod') {
 	})
 
 	rmqWatcher.on('change', data => {
-		topic = data.Value
+		let topic = data.Value
+		logger.info('Topic: ' + topic)
+		rabbit
+			.default()
+			.queue({name: topic})
+			.consume(handleEvent, {noAck: true});
 	})
 
 	rmqWatcher.on('error', err => {
 		logger.error(err.message)
 		lightship.shutdown()
 	});
+} else {
+	rabbit
+		.default()
+		.queue({name: 'events'})
+		.consume(handleEvent, {noAck: true});
 }
 
 // get all events
@@ -213,15 +222,11 @@ router.delete('/event/:id', async (req, res) => {
 })
 
 // handle ticket sale
-rabbit
-	.default()
-	.queue({name: topic})
-	.consume(handleEvent, {noAck: true});
-
 function handleEvent(data) {
 	logger.info('New message from RMQ', data)
+	console.log(data)
 
-	if (data.status === 'sale') {
+	if (data.status === 'sold') {
 		if (!data.eventId) {
 			logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
 			return
