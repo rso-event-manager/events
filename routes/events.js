@@ -132,8 +132,9 @@ router.get('/', async (req, res) => {
 					.then(res => {
 						if (res && res.data && res.data.venue) {
 							events[i] = {...event._doc, ...{venue: res.data.venue}};
+						} else if (res.breaker) {
+							logger.warn(`${res.breaker}`)
 						} else {
-							console.log("The venue with this id does not exist.", event.venue)
 							logger.warn(`The venue with this id ${event.venue} does not exist.`)
 							events[i]["venue"] = undefined
 						}
@@ -347,20 +348,24 @@ const breaker = new CircuitBreaker(getVenue, {
 	resetTimeout: 15000 // After 15 seconds, try again.
 })
 
-breaker.on('opened', ()  => {
+breaker.on('opened', () => {
 	logger.info('The breaker just opened')
 })
 
-breaker.on('timeout', ()  => {
+breaker.on('timeout', () => {
 	logger.info('TIMEOUT. Taking too long to respond')
 })
 
-breaker.on('halfOpen', ()  => {
+breaker.on('halfOpen', () => {
 	logger.info('The breaker is half open')
 })
 
-breaker.on('close', ()  => {
+breaker.on('close', () => {
 	logger.info('The breaker has closed')
+})
+
+breaker.fallback(() => {
+	return { breaker: 'Can\'t fetch venues. Displaying events only.'}
 })
 
 module.exports = router
