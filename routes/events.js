@@ -219,6 +219,8 @@ rabbit
 	.consume(handleEvent, {noAck: true});
 
 function handleEvent(data) {
+	logger.info('New message from RMQ', data)
+
 	if (data.status === 'sale') {
 		if (!data.eventId) {
 			logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
