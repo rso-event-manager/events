@@ -239,7 +239,9 @@ router.delete('/event/:id', async (req, res) => {
 
 // handle ticket sale
 function handleEvent(msg) {
-	const eventId = msg.content.toString()
+	console.log(msg)
+
+	const eventId = msg.toString()
 
 	if (eventId) {
 		logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
