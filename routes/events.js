@@ -52,6 +52,7 @@ if (process.env.NODE_ENV === 'prod') {
 	})
 
 	breakerWatcher.on('change', data => {
+		logger.info(`testBreaker changed to ${data.Value}`)
 		testBreaker = data.Value
 	})
 
@@ -299,6 +300,7 @@ async function getEvent(req, res, next) {
 }
 
 function sleep(ms) {
+	logger.info(`Sleep for ${ms}`)
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
