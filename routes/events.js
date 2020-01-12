@@ -7,7 +7,7 @@ const amqp = require('amqplib/callback_api')
 const CircuitBreaker = require('opossum')
 
 let venuesService = null
-let testBreaker = false
+let testBreaker = null
 
 if (process.env.NODE_ENV === 'prod') {
 	const watcher = consul.watch({
@@ -305,8 +305,8 @@ function sleep(ms) {
 }
 
 async function getVenue(id) {
-	logger.info(`Go to sleep? ` + testBreaker === true)
-	if (testBreaker === true) await sleep(6000)
+	logger.info(`Test breaker status: ${testBreaker} `)
+	if (testBreaker === 'sleep') await sleep(6000)
 
 	logger.info(`Get venue ${id}`)
 
