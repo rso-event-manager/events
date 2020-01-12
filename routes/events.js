@@ -2,9 +2,10 @@ const express = require('express')
 const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
-const {consul, lightship, logger} = require('../helpers')
+const {consul, lightship, logger, rabbit} = require('../helpers')
 
 let venuesService = null
+let topic = 'events'
 
 if (process.env.NODE_ENV === 'prod') {
 	const watcher = consul.watch({
@@ -23,6 +24,20 @@ if (process.env.NODE_ENV === 'prod') {
 	});
 
 	watcher.on('error', err => {
+		logger.error(err.message)
+		lightship.shutdown()
+	});
+
+	const rmqWatcher = consul.watch({
+		method: consul.kv.get,
+		options: {key: 'rmq/events'}
+	})
+
+	rmqWatcher.on('change', data => {
+		topic = data.Value
+	})
+
+	rmqWatcher.on('error', err => {
 		logger.error(err.message)
 		lightship.shutdown()
 	});
@@ -198,27 +213,31 @@ router.delete('/event/:id', async (req, res) => {
 })
 
 // handle ticket sale
-router.post('/sellTicket', async (req, res) => {
-	if (!req.body.eventId) {
-		logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
-		return
+rabbit
+	.default()
+	.queue({name: topic})
+	.consume(handleEvent, {noAck: true});
+
+function handleEvent(data) {
+	if (data.status === 'sale') {
+		if (!data.eventId) {
+			logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
+			return
+		}
+
+		const eventId = data.eventId
+
+		logger.info('Decrease number of tickets for event with id ' + eventId)
+
+		Event.findOneAndUpdate({_id: eventId}, {$inc: {numberOfTickets: -1}})
+			.then(() => {
+				logger.info(`Event with id ${eventId} was successfully updated.`)
+			})
+			.catch(err => {
+				logger.error(err.message)
+			})
 	}
-
-	const eventId = req.body.eventId
-
-	logger.info('Decrease number of tickets for event with id ' + eventId)
-
-	Event.findOneAndUpdate({_id: eventId}, {$inc: {numberOfTickets: -1}})
-		.then(() => {
-			logger.info(`Event with id ${req.params.id} was successfully updated.`)
-
-			return res.status(200).json(`Event with id ${req.params.id} was successfully updated.`)
-		})
-		.catch(err => {
-			logger.error(err.message)
-			return res.status(400).json({message: err.message})
-		})
-})
+}
 
 async function getEvent(req, res, next) {
 	logger.info(`Find event by ID in Mongo ${req.params.id}`)

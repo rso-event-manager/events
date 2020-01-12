@@ -2,12 +2,12 @@ const consul = require('consul')({
 	host: process.env.CONSUL,
 	port: 8500
 })
-
-const {createLightship} = require('lightship')
-const lightship = createLightship()
-
 const winston = require('winston');
 require('winston-logstash');
+const {createLightship} = require('lightship')
+const jackrabbit = require('jackrabbit');
+
+const lightship = createLightship()
 
 winston.add(winston.transports.Logstash, {
 	port: 11667,
@@ -29,8 +29,11 @@ const logger = {
 	warn: (msg) => winston.warn(msg, additionalWinstonData),
 }
 
+const rabbit = jackrabbit(process.env.RABBITMQ);
+
 module.exports = {
 	consul: consul,
 	lightship: lightship,
 	logger: logger,
+	rabbit: rabbit,
 }
