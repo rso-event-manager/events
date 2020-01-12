@@ -3,7 +3,6 @@ const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
 const {consul, lightship, logger} = require('../helpers')
-const rabbitmq = require('../amqlib')
 
 let venuesService = null
 
@@ -212,8 +211,7 @@ router.post('/sellTicket', async (req, res) => {
 	Event.findOneAndUpdate({_id: eventId}, {$inc: {numberOfTickets: -1}})
 		.then(() => {
 			logger.info(`Event with id ${req.params.id} was successfully updated.`)
-			rabbitmq.publish("", "events", new Buffer(`Ticket for event ${eventId} has been sold.`))
-			//publish("", "jobs", new Buffer("work work work"));
+
 			return res.status(200).json(`Event with id ${req.params.id} was successfully updated.`)
 		})
 		.catch(err => {
