@@ -61,7 +61,7 @@ function connectToRMQ(topic) {
 
 					logger.info(`[*] Waiting for messages in ${topic}.`);
 
-					channel.consume(topic, handleEvent, { noAck: true })
+					channel.consume(topic, handleEvent, {noAck: true})
 				}
 			})
 		}
@@ -239,28 +239,25 @@ router.delete('/event/:id', async (req, res) => {
 
 // handle ticket sale
 function handleEvent(msg) {
-	logger.info('New message from RMQ', msg.content.toString())
+	const eventId = msg.content.toString()
 
-	const data = JSON.parse(msg.content.toString())
-
-	if (data.status === 'sold') {
-		if (!data.eventId) {
-			logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
-			return
-		}
-
-		const eventId = data.eventId
-
-		logger.info('Decrease number of tickets for event with id ' + eventId)
-
-		Event.findOneAndUpdate({_id: eventId}, {$inc: {numberOfTickets: -1}})
-			.then(() => {
-				logger.info(`Event with id ${eventId} was successfully updated.`)
-			})
-			.catch(err => {
-				logger.error(err.message)
-			})
+	if (eventId) {
+		logger.warn(`Cannot decrease number of tickets for event because id is missing.`)
+		return
 	}
+
+	logger.info('New message from RMQ', eventId)
+
+	logger.info('Decrease number of tickets for event with id ' + eventId)
+
+	Event.findOneAndUpdate({_id: eventId}, {$inc: {numberOfTickets: -1}})
+		.then(() => {
+			logger.info(`Event with id ${eventId} was successfully updated.`)
+		})
+		.catch(err => {
+			logger.error(err.message)
+		})
+}
 }
 
 async function getEvent(req, res, next) {
