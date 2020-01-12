@@ -308,6 +308,7 @@ function sleep(ms) {
 async function getVenue(id) {
 	logger.info(`Test breaker status: ${testBreaker} `)
 	if (testBreaker === 'sleep') await sleep(6000)
+	if (breaker.opened) return
 
 	logger.info(`Get venue ${id}`)
 
@@ -346,6 +347,10 @@ const breaker = new CircuitBreaker(getVenue, {
 	timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
 	errorThresholdPercentage: 50, // When 50% of requests fail, trip the circuit
 	resetTimeout: 15000 // After 15 seconds, try again.
+})
+
+breaker.on('reject', () => {
+	logger.info('The breaker is opened')
 })
 
 breaker.on('opened', () => {
