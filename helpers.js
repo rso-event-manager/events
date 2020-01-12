@@ -5,7 +5,6 @@ const consul = require('consul')({
 const winston = require('winston');
 require('winston-logstash');
 const {createLightship} = require('lightship')
-const jackrabbit = require('jackrabbit');
 
 const lightship = createLightship()
 
@@ -29,11 +28,8 @@ const logger = {
 	warn: (msg) => winston.warn(msg, additionalWinstonData),
 }
 
-const rabbit = jackrabbit(process.env.RABBITMQ);
-
 module.exports = {
 	consul: consul,
 	lightship: lightship,
 	logger: logger,
-	rabbit: rabbit,
 }

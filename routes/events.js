@@ -2,7 +2,8 @@ const express = require('express')
 const router = express.Router()
 const Event = require('../models/event')
 const fetch = require('node-fetch')
-const {consul, lightship, logger, rabbit} = require('../helpers')
+const {consul, lightship, logger} = require('../helpers')
+const amqp = require('amqplib/callback_api')
 
 let venuesService = null
 
@@ -35,10 +36,7 @@ if (process.env.NODE_ENV === 'prod') {
 	rmqWatcher.on('change', data => {
 		let topic = data.Value
 		logger.info('Topic: ' + topic)
-		rabbit
-			.default()
-			.queue({name: topic})
-			.consume(handleEvent, {noAck: true});
+		connectToRMQ(topic)
 	})
 
 	rmqWatcher.on('error', err => {
@@ -46,10 +44,28 @@ if (process.env.NODE_ENV === 'prod') {
 		lightship.shutdown()
 	});
 } else {
-	rabbit
-		.default()
-		.queue({name: 'events'})
-		.consume(handleEvent, {noAck: true});
+	const topic = 'events'
+	connectToRMQ(topic)
+}
+
+function connectToRMQ(topic) {
+	amqp.connect(process.env.RABBITMQ, function (err, conn) {
+		if (err) {
+			logger.error(err.message)
+		} else {
+			conn.createChannel(function (err1, channel) {
+				if (err1) {
+					logger.error(err1.message)
+				} else {
+					channel.assertQueue(topic);
+
+					logger.info(`[*] Waiting for messages in ${topic}.`);
+
+					channel.consume(topic, handleEvent, { noAck: true })
+				}
+			})
+		}
+	})
 }
 
 // get all events
@@ -222,9 +238,10 @@ router.delete('/event/:id', async (req, res) => {
 })
 
 // handle ticket sale
-function handleEvent(data) {
-	logger.info('New message from RMQ', data)
-	console.log(data)
+function handleEvent(msg) {
+	logger.info('New message from RMQ', msg.content.toString())
+
+	const data = JSON.parse(msg.content.toString())
 
 	if (data.status === 'sold') {
 		if (!data.eventId) {
