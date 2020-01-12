@@ -16,6 +16,8 @@ spec:
         - image: ribvid/rso-events:1.0.7
           name: events
           env:
+            - name: CLOUDAMQP_URL
+              value: "amqp://xhynquga:TsoWIxuD8ZRXu0Mjq0qrB-IEdOUJgDfs@stingray.rmq.cloudamqp.com/xhynquga"
             - name: ROARR_LOG
               value: "true"
             - name: NAME
