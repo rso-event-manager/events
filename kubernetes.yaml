@@ -16,6 +16,8 @@ spec:
         - image: ribvid/rso-events:1.0.7
           name: events
           env:
+            - name: SPM_TOKEN
+              value: "1808ad59-dfc7-40da-ab1a-3880d0880f9e"
             - name: RABBITMQ
               value: "amqp://xhynquga:TsoWIxuD8ZRXu0Mjq0qrB-IEdOUJgDfs@stingray.rmq.cloudamqp.com/xhynquga"
             - name: ROARR_LOG

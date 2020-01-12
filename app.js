@@ -4,6 +4,7 @@ const port = 3000
 const mongoose = require('mongoose');
 const { consul, lightship, logger } = require('./helpers')
 const cors = require('cors')
+require('spm-agent-nodejs')
 
 const connect = (dbURL) => {
 	mongoose.connect(dbURL, {useNewUrlParser: true, useUnifiedTopology: true}).catch(err => {
