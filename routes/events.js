@@ -258,7 +258,6 @@ function handleEvent(msg) {
 			logger.error(err.message)
 		})
 }
-}
 
 async function getEvent(req, res, next) {
 	logger.info(`Find event by ID in Mongo ${req.params.id}`)
