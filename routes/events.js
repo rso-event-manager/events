@@ -7,7 +7,7 @@ const amqp = require('amqplib/callback_api')
 const CircuitBreaker = require('opossum')
 
 let venuesService = null
-let testBreaker = true
+let testBreaker = false
 
 if (process.env.NODE_ENV === 'prod') {
 	const watcher = consul.watch({
@@ -345,19 +345,19 @@ const breaker = new CircuitBreaker(getVenue, {
 })
 
 breaker.on('opened', ()  => {
-	console.log('The breaker just opened')
+	logger.info('The breaker just opened')
 })
 
 breaker.on('timeout', ()  => {
-	console.log('TIMEOUT. Taking too long to respond')
+	logger.info('TIMEOUT. Taking too long to respond')
 })
 
 breaker.on('halfOpen', ()  => {
-	console.log('The breaker is half open')
+	logger.info('The breaker is half open')
 })
 
 breaker.on('close', ()  => {
-	console.log('The breaker has closed')
+	logger.info('The breaker has closed')
 })
 
 module.exports = router
