@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const port = 3000
+const port = process.env.NODE_ENV === 'prod' ? 3000 : 4000
 const mongoose = require('mongoose');
 const { consul, lightship, logger } = require('./helpers')
 const cors = require('cors')

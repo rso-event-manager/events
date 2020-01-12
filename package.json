@@ -16,6 +16,7 @@
     "lightship": "^4.3.7",
     "mongoose": "^5.7.11",
     "node-fetch": "^2.6.0",
+    "opossum": "^4.2.3",
     "spm-agent-nodejs": "^3.0.0",
     "winston": "^2.4.1",
     "winston-logstash": "^0.4.0"

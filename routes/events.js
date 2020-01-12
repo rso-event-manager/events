@@ -4,8 +4,10 @@ const Event = require('../models/event')
 const fetch = require('node-fetch')
 const {consul, lightship, logger} = require('../helpers')
 const amqp = require('amqplib/callback_api')
+const CircuitBreaker = require('opossum')
 
 let venuesService = null
+let testBreaker = true
 
 if (process.env.NODE_ENV === 'prod') {
 	const watcher = consul.watch({
@@ -43,7 +45,21 @@ if (process.env.NODE_ENV === 'prod') {
 		logger.error(err.message)
 		lightship.shutdown()
 	});
+
+	const breakerWatcher = consul.watch({
+		method: consul.kv.get,
+		options: {key: 'testCB'}
+	})
+
+	breakerWatcher.on('change', data => {
+		testBreaker = data.Value
+	})
+
+	breakerWatcher.on('error', err => {
+		logger.error(err.message)
+	});
 } else {
+	venuesService = 'http://localhost:3000/'
 	const topic = 'events'
 	connectToRMQ(topic)
 }
@@ -109,21 +125,20 @@ router.get('/', async (req, res) => {
 
 		let events = await Event.find(query)
 
-		events = events.map(async (event) => {
+		for (let [i, event] of events.entries()) {
 			if (event.venue) {
-				await getVenue(event.venue)
+				await breaker.fire(event.venue)
 					.then(res => {
 						if (res && res.data && res.data.venue) {
-							event = {...event._doc, ...{venue: res.data.venue}};
+							events[i] = {...event._doc, ...{venue: res.data.venue}};
 						} else {
 							console.log("The venue with this id does not exist.", event.venue)
 							logger.warn(`The venue with this id ${event.venue} does not exist.`)
-							delete event.venue
+							events[i]["venue"] = undefined
 						}
 					})
 			}
-			return event
-		})
+		}
 
 		logger.info(JSON.stringify(events))
 
@@ -138,12 +153,16 @@ router.get('/', async (req, res) => {
 router.get('/event/:id', getEvent, async (req, res) => {
 	logger.info(`Get event ${req.params.id}`)
 	if (res.event.venue) {
-		await getVenue(res.event.venue)
-			.then(res => {
-				if (res && res.data && res.data.venue) {
-					res.event = {...res.event._doc, ...{venue: res.data.venue}};
-				}
-			})
+		try {
+			await breaker.fire(res.event.venue)
+				.then(venueRes => {
+					if (venueRes && venueRes.data && venueRes.data.venue) {
+						res.event = {...res.event._doc, ...{venue: venueRes.data.venue}};
+					}
+				})
+		} catch (err) {
+			return res.status(500).json(err.message)
+		}
 	}
 	return res.status(200).json(res.event)
 })
@@ -279,7 +298,13 @@ async function getEvent(req, res, next) {
 	return next()
 }
 
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function getVenue(id) {
+	if (testBreaker) await sleep(6000)
+
 	logger.info(`Get venue ${id}`)
 
 	if (!venuesService) {
@@ -312,5 +337,27 @@ async function getVenue(id) {
 
 	return data
 }
+
+const breaker = new CircuitBreaker(getVenue, {
+	timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
+	errorThresholdPercentage: 50, // When 50% of requests fail, trip the circuit
+	resetTimeout: 30000 // After 30 seconds, try again.
+})
+
+breaker.on('opened', ()  => {
+	console.log('The breaker just opened')
+})
+
+breaker.on('timeout', ()  => {
+	console.log('TIMEOUT. Taking too long to respond')
+})
+
+breaker.on('halfOpen', ()  => {
+	console.log('The breaker is half open')
+})
+
+breaker.on('close', ()  => {
+	console.log('The breaker has closed')
+})
 
 module.exports = router
